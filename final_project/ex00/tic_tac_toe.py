@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-"""A colourful, text-based tic-tac-toe game."""
+"""A text-based tic-tac-toe game."""
 
 import os
 import sys
-
-
-RESET = "\033[0m"
-CYAN = "\033[96m"
-YELLOW = "\033[93m"
-GREEN = "\033[92m"
-RED = "\033[91m"
-DIM = "\033[2m"
 
 
 def clear_screen():
@@ -19,28 +11,17 @@ def clear_screen():
 		os.system("cls" if os.name == "nt" else "clear")
 
 
-def colour(text, colour_code):
-	if not sys.stdout.isatty():
-		return text
-	return f"{colour_code}{text}{RESET}"
-
-
 def draw_board(board):
 	print()
-	print(colour("                 TIC-TAC-TOE", CYAN))
-	print(colour("          Choose a number from 1 to 9", DIM))
+	print("                 TIC-TAC-TOE")
+	print("          Choose a number from 1 to 9")
 	print()
 	print("                 +---+---+---+")
 	for row in range(3):
 		cells = []
 		for column in range(3):
 			position = row * 3 + column
-			value = board[position]
-			if value == "X":
-				value = colour(value, YELLOW)
-			elif value == "O":
-				value = colour(value, GREEN)
-			cells.append(value)
+			cells.append(board[position])
 		print(f"                 | {cells[0]} | {cells[1]} | {cells[2]} |")
 		print("                 +---+---+---+")
 	print()
@@ -57,8 +38,8 @@ def has_won(board, mark):
 
 
 def get_names():
-	print(colour("Welcome to the board!", CYAN))
-	print(colour("Type STOP at any time to leave the game.\n", DIM))
+	print("Welcome to the board!")
+	print("Type STOP at any time to leave the game.\n")
 	player_one = input("Player 1 name (X): ").strip()
 	if player_one.upper() == "STOP":
 		return None
@@ -83,13 +64,13 @@ def play_round(players, score):
 		if move.upper() == "STOP":
 			return False
 		if not move.isdigit() or not 1 <= int(move) <= 9:
-			print(colour("Please enter a number from 1 to 9.", RED))
+			print("Please enter a number from 1 to 9.")
 			input("Press Enter to try again...")
 			continue
 
 		position = int(move) - 1
 		if board[position] in marks:
-			print(colour("That space is already taken. Choose another one.", RED))
+			print("That space is already taken. Choose another one.")
 			input("Press Enter to try again...")
 			continue
 
@@ -98,14 +79,14 @@ def play_round(players, score):
 			clear_screen()
 			draw_board(board)
 			score[turn] += 1
-			print(colour(f"{name} wins this round!", GREEN))
+			print(f"{name} wins this round!")
 			print(f"Score: {players[0]} {score[0]} - {score[1]} {players[1]}")
 			return True
 
 		if all(cell in marks for cell in board):
 			clear_screen()
 			draw_board(board)
-			print(colour("It's a draw!", CYAN))
+			print("It's a draw!")
 			print(f"Score: {players[0]} {score[0]} - {score[1]} {players[1]}")
 			return True
 
