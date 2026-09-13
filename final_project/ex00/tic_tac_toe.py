@@ -27,14 +27,16 @@ def draw_board(board):
 	print()
 
 
+WINNING_LINES = (
+	(0, 1, 2), (3, 4, 5), (6, 7, 8),
+	(0, 3, 6), (1, 4, 7), (2, 5, 8),
+	(0, 4, 8), (2, 4, 6),
+)
+
+
 def has_won(board, mark):
-	winning_lines = (
-		(0, 1, 2), (3, 4, 5), (6, 7, 8),
-		(0, 3, 6), (1, 4, 7), (2, 5, 8),
-		(0, 4, 8), (2, 4, 6),
-	)
 	return any(all(board[position] == mark for position in line)
-			   for line in winning_lines)
+			   for line in WINNING_LINES)
 
 
 def get_names():
@@ -139,6 +141,7 @@ class TicTacToeGUI:
 		self.game_frame = tk.Frame(root, bg=PAPER_BG, padx=24, pady=24)
  
 		self._build_setup_frame()
+		self._build_game_frame()
 		self.setup_frame.pack()
  
 	#---------Tic-Tac-Toe  Screen---------#
@@ -163,7 +166,7 @@ class TicTacToeGUI:
 		self.x_entry.pack(fill="x", pady=(2, 16), ipady=4)
  
 		tk.Label(
-			self.setup_frame, text="Player 1 : What's your name?", font=("Georgia", 10, "italic"),
+			self.setup_frame, text="Player 2 : What's your name?", font=("Georgia", 10, "italic"),
 			bg=PAPER_BG, fg=INK_O, anchor="w",
 		).pack(fill="x")
 		self.o_entry = tk.Entry(
@@ -190,7 +193,6 @@ class TicTacToeGUI:
 		self.score = [0, 0]
  
 		self.setup_frame.pack_forget()
-		self._build_game_frame()
 		self.game_frame.pack()
 		self._start_round()
  
@@ -295,12 +297,7 @@ class TicTacToeGUI:
 			btn.config(state="disabled")
  
 	def _highlight_winning_line(self, mark):
-		winning_lines = (
-			(0, 1, 2), (3, 4, 5), (6, 7, 8),
-			(0, 3, 6), (1, 4, 7), (2, 5, 8),
-			(0, 4, 8), (2, 4, 6),
-		)
-		for line in winning_lines:
+		for line in WINNING_LINES:
 			if all(self.board[pos] == mark for pos in line):
 				for pos in line:
 					self.buttons[pos].config(bg=WIN_HIGHLIGHT)
