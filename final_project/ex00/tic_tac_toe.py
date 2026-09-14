@@ -11,6 +11,7 @@ def clear_screen():
 		os.system("cls" if os.name == "nt" else "clear")
 
 
+# Render the 3x3 board as a bordered grid, showing each cell's mark or its number if empty
 def draw_board(board):
 	print()
 	print("                 TIC-TAC-TOE")
@@ -27,6 +28,7 @@ def draw_board(board):
 	print()
 
 
+# All 8 index triples (0-based) that make a winning line: 3 rows, 3 columns, 2 diagonals
 WINNING_LINES = (
 	(0, 1, 2), (3, 4, 5), (6, 7, 8),
 	(0, 3, 6), (1, 4, 7), (2, 5, 8),
@@ -34,11 +36,13 @@ WINNING_LINES = (
 )
 
 
+# True if the given mark fills every position of any winning line
 def has_won(board, mark):
 	return any(all(board[position] == mark for position in line)
 			   for line in WINNING_LINES)
 
 
+# Prompt for both player names once per session; returns None if either player types STOP
 def get_names():
 	print("Welcome to the board!")
 	print("Type STOP at any time to leave the game.\n")
@@ -51,10 +55,12 @@ def get_names():
 	return player_one or "Player 1", player_two or "Player 2"
 
 
+# Play one round on a fresh board, alternating turns until a win, a draw, or a mid-round STOP.
+# Returns True if the round finished normally (win/draw) or False if a player stopped.
 def play_round(players, score):
-	board = [str(position) for position in range(1, 10)]
+	board = [str(position) for position in range(1, 10)]  # cells 1-9 double as their own empty-space labels
 	marks = ("X", "O")
-	turn = 0
+	turn = 0  # index into players/marks for whoever moves next
 
 	while True:
 		clear_screen()
@@ -66,18 +72,18 @@ def play_round(players, score):
 		if move.upper() == "STOP":
 			return False
 		if not move.isdigit() or not 1 <= int(move) <= 9:
-			print("Please enter a number from 1 to 9.")
+			print("Please enter a number from 1 to 9.")  # invalid input: re-prompt without switching turns
 			input("Press Enter to try again...")
 			continue
 
 		position = int(move) - 1
 		if board[position] in marks:
-			print("That space is already taken. Choose another one.")
+			print("That space is already taken. Choose another one.")  # occupied cell: re-prompt same player
 			input("Press Enter to try again...")
 			continue
 
 		board[position] = mark
-		if has_won(board, mark):
+		if has_won(board, mark):  # current player just completed a line
 			clear_screen()
 			draw_board(board)
 			score[turn] += 1
@@ -85,16 +91,17 @@ def play_round(players, score):
 			print(f"Score: {players[0]} {score[0]} - {score[1]} {players[1]}")
 			return True
 
-		if all(cell in marks for cell in board):
+		if all(cell in marks for cell in board):  # no empty cells left and nobody won
 			clear_screen()
 			draw_board(board)
 			print("It's a draw!")
 			print(f"Score: {players[0]} {score[0]} - {score[1]} {players[1]}")
 			return True
 
-		turn = 1 - turn
+		turn = 1 - turn  # hand the turn to the other player
 
 
+# CLI entry point: collect names once, then loop rounds (keeping score) until the user stops
 def main():
 	names = get_names()
 	if names is None:
@@ -111,22 +118,25 @@ def main():
 
 
 
- 
+
+# Color palette for the Tkinter GUI (paper-and-ink look; separate colors per mark)
 PAPER_BG = "#d3f8a3"
 INK = "#4a4a42"
 FAINT = "#9a978a"
 INK_X = "#1f3b73"
 INK_O = "#b23a2e"
 WIN_HIGHLIGHT = "#ffe082"
- 
- 
+
+
+# Windowed version of the same game, reusing WINNING_LINES/has_won from the CLI logic above
 class TicTacToeGUI:
+	# Build the root window and both frames (name-entry setup screen, then the game screen)
 	def __init__(self, root):
 		import tkinter as tk
 		self.tk = tk
- 
+
 		self.root = root
-		root.title("ASCII AREANA: TIC-TAC-TOE")
+		root.title("ASCII ARENA: TIC-TAC-TOE")
 		root.configure(bg=PAPER_BG)
 		root.resizable(False, False)
  
@@ -146,11 +156,12 @@ class TicTacToeGUI:
  
 	#---------Tic-Tac-Toe  Screen---------#
  
+	# Build the name-entry screen shown before a game starts
 	def _build_setup_frame(self):
 		tk = self.tk
  
 		tk.Label(
-			self.setup_frame, text="ASCII AREANA: TIC-TAC-TOE", font=("Georgia", 28, "bold"),
+			self.setup_frame, text="ASCII ARENA: TIC-TAC-TOE", font=("Georgia", 28, "bold"),
 			bg=PAPER_BG, fg=INK,
 		).pack(pady=(0, 4))
 		
@@ -186,6 +197,7 @@ class TicTacToeGUI:
 		self.o_entry.bind("<Return>", lambda e: self.start_game())
 		self.x_entry.focus_set()
  
+	# Read entered names, reset score, and switch from the setup screen to the game screen
 	def start_game(self):
 		x_name = self.x_entry.get().strip() or "Player 1"
 		o_name = self.o_entry.get().strip() or "Player 2"
@@ -198,6 +210,7 @@ class TicTacToeGUI:
  
 	# ---- game screen ----
  
+	# Build the game screen: score row, turn label, 3x3 button grid, and next-round/go-back controls
 	def _build_game_frame(self):
 		tk = self.tk
  
@@ -244,6 +257,7 @@ class TicTacToeGUI:
 		self.result_label = tk.Label(self.game_frame, text="", font=("Georgia", 10, "italic"), bg=PAPER_BG, fg=FAINT)
 		self.result_label.pack(pady=(12, 0))
  
+	# Reset the board, buttons, and labels for a new round (keeps the running score)
 	def _start_round(self):
 		self.board = [None] * 9
 		self.turn = 0
@@ -255,17 +269,20 @@ class TicTacToeGUI:
 		self._update_score_labels()
 		self._update_turn_label()
  
+	# Refresh the score labels with each player's current win count
 	def _update_score_labels(self):
 		self.score_label_x.config(text=f"{self.players[0]}: {self.score[0]}")
 		self.score_label_o.config(text=f"{self.players[1]}: {self.score[1]}")
- 
+
+	# Refresh the label showing whose turn it is, in that player's color
 	def _update_turn_label(self):
 		mark = "X" if self.turn == 0 else "O"
 		color = INK_X if self.turn == 0 else INK_O
 		self.turn_label.config(text=f"{self.players[self.turn]}'s turn ({mark})", fg=color)
- 
+
+	# Handle a click on a board button: place the mark, then check for a win, a draw, or pass the turn
 	def handle_move(self, position):
-		if self.round_over or self.board[position] is not None:
+		if self.round_over or self.board[position] is not None:  # ignore clicks once the round is over or the cell is taken
 			return
  
 		mark = "X" if self.turn == 0 else "O"
@@ -291,18 +308,21 @@ class TicTacToeGUI:
 		self.turn = 1 - self.turn
 		self._update_turn_label()
  
+	# Reveal the Next round button and lock the board once the round has a winner or a draw
 	def _end_round(self):
-		self.next_round_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))		
+		self.next_round_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
 		for btn in self.buttons:
 			btn.config(state="disabled")
- 
+
+	# Highlight the three cells of whichever line the given mark just completed
 	def _highlight_winning_line(self, mark):
 		for line in WINNING_LINES:
 			if all(self.board[pos] == mark for pos in line):
 				for pos in line:
 					self.buttons[pos].config(bg=WIN_HIGHLIGHT)
 				break
- 
+
+	# Clear the name entries and return from the game screen to the setup screen
 	def goback(self):
 		self.game_frame.pack_forget()
 		self.x_entry.delete(0, self.tk.END)
@@ -310,6 +330,7 @@ class TicTacToeGUI:
 		self.setup_frame.pack()
  
  
+# Build the Tk root window, mount the GUI, and start the event loop
 def run_gui():
 	import tkinter as tk
 	root = tk.Tk()
@@ -317,6 +338,7 @@ def run_gui():
 	root.mainloop()
  
  
+# Entry point: run the Tkinter GUI when invoked as `tic_tac_toe.py gui`, otherwise run the CLI game
 if __name__ == "__main__":
 	if len(sys.argv) > 1 and sys.argv[1] == "gui":
 		run_gui()
